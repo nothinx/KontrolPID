@@ -65,6 +65,27 @@ void loop() {
 
 Panggil `hitung()` dengan selang waktu yang kira-kira tetap (10–100 ms untuk motor, 0,5–1 detik untuk suhu). Selang tidak harus persis, karena dt diukur sendiri, tapi memanggil ribuan kali per detik membuat D sangat berderau.
 
+## Hasil simulasi
+
+![Suhu pemanas menuju target 100 derajat untuk KontrolPID, algoritma PID_v1, dan PID tanpa anti-windup, dengan panel keluaran PWM](extras/gambar/respon-pemanas.svg)
+
+Pemanas orde-1 (kp = 4, ki = 2, PWM 0–255). Selama keluaran mentok di 255, PID tanpa anti-windup terus menumpuk integral dan suhu lewat 22,5° di atas target. KontrolPID hanya 3,0°, algoritma PID_v1 5,8°.
+
+![Respon suhu saat hitung() dipanggil dengan selang acak 100 sampai 400 ms](extras/gambar/loop-tidak-rata.svg)
+
+Tuning sama, tapi `hitung()` dipanggil dengan selang acak 100–400 ms (misalnya `loop()` tersendat LCD atau Serial). KontrolPID memakai waktu yang benar-benar lewat, jadi responnya hampir sama dengan rancangan (selisih maks 0,3°). Algoritma PID_v1 (disalin dari `Compute()` versi 1.2.1) menghitung seolah selalu lewat 100 ms, sehingga integral turun lebih lambat dan overshoot membesar (selisih maks 4,2°).
+
+![Keluaran PID saat target kecepatan motor melompat dari 100 ke 140 rpm, D dari error dibanding D dari perubahan nilai](extras/gambar/derivative-kick.svg)
+
+Saat target melompat, D yang dihitung dari error melonjak sesaat (keluaran mentok 255 selama satu langkah), sedangkan D dari perubahan nilai tidak. Kecepatan motor hampir sama; yang berbeda adalah hentakan ke motor. Ini cara kerja *derivative on measurement*, yang juga dipakai PID_v1, QuickPID, dan FastPID.
+
+Grafik dibuat dari simulasi di PC yang menjalankan kode library ini (`extras/simulasi`):
+
+```sh
+cd extras/simulasi
+python gambar.py   # butuh g++ dan matplotlib
+```
+
 ## Referensi fungsi
 
 ### Dasar

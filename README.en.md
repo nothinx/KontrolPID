@@ -41,6 +41,27 @@ Checked against the source of PID_v1 1.2.1 (br3ttb), QuickPID 3.1.9, and FastPID
 - Change tunings on the fly without an integral bump. Bumpless manual-to-auto with `reset(lastOutput)`.
 - P, I, and D terms are readable for the Serial Plotter. 50 bytes of RAM per controller. Safe across the `micros()` overflow.
 
+## Simulation results
+
+![Heater temperature for KontrolPID, the PID_v1 algorithm, and PID without anti-windup, with a PWM output panel](extras/gambar/respon-pemanas.svg)
+
+First-order heater (kp = 4, ki = 2, PWM 0–255), simulated. Overshoot: KontrolPID 3.0°, PID_v1 algorithm 5.8°, no anti-windup 22.5°.
+
+![Temperature response when hitung() is called at random 100 to 400 ms intervals](extras/gambar/loop-tidak-rata.svg)
+
+Same tuning, `hitung()` called at random 100–400 ms intervals. KontrolPID uses the real elapsed time and stays within 0.3° of the designed response; the PID_v1 1.2.1 `Compute()` algorithm assumes 100 ms every time and deviates by up to 4.2°.
+
+![PID output when the motor speed setpoint jumps from 100 to 140 rpm, derivative on error vs derivative on measurement](extras/gambar/derivative-kick.svg)
+
+Derivative on error kicks the output to 255 when the setpoint jumps; derivative on measurement (also used by PID_v1, QuickPID, and FastPID) does not.
+
+The plots come from a PC simulation that runs this library's code (`extras/simulasi`):
+
+```sh
+cd extras/simulasi
+python gambar.py   # needs g++ and matplotlib
+```
+
 ## Function reference
 
 | Indonesian | English | Notes |
