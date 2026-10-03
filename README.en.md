@@ -39,7 +39,7 @@ Checked against the source of PID_v1 1.2.1 (br3ttb), QuickPID 3.1.9, and FastPID
 - Anti-windup by conditional integration plus clamping. Measured overshoot on a first-order heater (PWM 0–255, kp = 4, ki = 2): **3.0** vs 5.8 for the PID_v1 algorithm and 22.5 with no anti-windup.
 - Derivative on measurement: no kick when the setpoint jumps.
 - Change tunings on the fly without an integral bump. Bumpless manual-to-auto with `reset(lastOutput)`.
-- P, I, and D terms are readable for the Serial Plotter. 50 bytes of RAM per controller. Safe across the `micros()` overflow.
+- P, I, and D terms are readable for the Serial Plotter. 66 bytes of RAM per controller. Safe across the `micros()` overflow.
 
 ## Simulation results
 
@@ -61,6 +61,20 @@ The plots come from a PC simulation that runs this library's code (`extras/simul
 cd extras/simulasi
 python gambar.py   # needs g++ and matplotlib
 ```
+
+## Speed & memory
+
+Measured with simavr (cycle-accurate ATmega328P simulator), Arduino Uno 16 MHz, same workload for all.
+
+| Scenario | KontrolPID 1.0.1 | KontrolPID 1.0.0 | PID_v1 1.2.1 | QuickPID 3.1.9 | FastPID 1.3.1 |
+|---|---|---|---|---|---|
+| `hitung(target, value, dt)` fixed dt | 2,189 cycles (137 µs) | 2,998 (187 µs) | 1,600 (100 µs) | 2,529 (158 µs) | 1,096 (68 µs)¹ |
+| same, with D filter | 2,604 (163 µs) | 3,991 (249 µs) | - | - | - |
+| `hitung(target, value)` with `micros()` | 3,067 (192 µs) | 3,277 (205 µs) | - | - | - |
+| RAM per object | 66 B | 50 B | 60 B | 79 B | 45 B |
+| Extra flash | 2,188 B | 1,874 B | 1,642 B | 2,350 B | 1,284 B |
+
+¹ Fixed-point `int16_t`, fixed rate. `hitung()` is O(1). Since 1.0.1, `ki·dt`, `kd/dt` and the D-filter coefficient are cached per dt (16 bytes of RAM), so a fixed dt needs no float division. PID_v1 is faster because it uses a fixed `SampleTime` and no output-saturation check (hence its larger overshoot); FastPID is faster because it is fixed-point. No `float` → `double` promotion in `src/`. Benchmark sketch: `extras/benchmark/KontrolPIDBenchmark`.
 
 ## Function reference
 
@@ -84,7 +98,7 @@ python gambar.py   # needs g++ and matplotlib
 
 ## Status
 
-Version 1.0.0 passes automated logic tests (including plant simulations) and compiles on Uno, Mega, ESP32, ESP32-C3, ESP32-S3, STM32 Blackpill F411, and Bluepill F103. It has **not yet been tested on real hardware**.
+Version 1.0.1 passes automated logic tests (including plant simulations) and compiles on Uno, Mega, ESP32, ESP32-C3, ESP32-S3, STM32 Blackpill F411, and Bluepill F103. It has **not yet been tested on real hardware**.
 
 ## License
 

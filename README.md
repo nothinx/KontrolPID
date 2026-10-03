@@ -20,7 +20,7 @@ float pwm = pid.hitung(target, nilai);
 - **Perpindahan mulus dari kendali manual** lewat `reset(keluaranTerakhir)`.
 - **Arah terbalik** untuk proses seperti pendingin (keluaran naik, nilai turun).
 - **Komponen P, I, D bisa dibaca** untuk Serial Plotter.
-- Aman saat `micros()` meluap (setiap ±71 menit). Memakai 50 byte RAM per pengendali.
+- Aman saat `micros()` meluap (setiap ±71 menit). Memakai 66 byte RAM per pengendali.
 
 ## Board yang didukung
 
@@ -85,6 +85,28 @@ Grafik dibuat dari simulasi di PC yang menjalankan kode library ini (`extras/sim
 cd extras/simulasi
 python gambar.py   # butuh g++ dan matplotlib
 ```
+
+## Kecepatan & memori
+
+Diukur dengan simavr (simulator ATmega328P yang akurat per siklus) di Arduino Uno 16 MHz. Nilai sensor berganti tiap panggilan di sekitar target, kp = 2, ki = 0,5, kd = 0,1, batas 0–255. Pembanding diberi beban yang sama; PID_v1 dibuat menghitung di setiap panggilan (`millis()` dimajukan 10 ms, biaya ±20 siklus ikut terhitung).
+
+| Skenario | KontrolPID 1.0.1 | KontrolPID 1.0.0 | PID_v1 1.2.1 | QuickPID 3.1.9 | FastPID 1.3.1 |
+|---|---|---|---|---|---|
+| `hitung(target, nilai, dt)` dt tetap | 2.189 siklus (137 µs) | 2.998 (187 µs) | 1.600 (100 µs) | 2.529 (158 µs) | 1.096 (68 µs)¹ |
+| sama, dengan `aturFilterD()` | 2.604 (163 µs) | 3.991 (249 µs) | - | - | - |
+| `hitung(target, nilai)` dengan `micros()` | 3.067 (192 µs) | 3.277 (205 µs) | - | - | - |
+| RAM per objek | 66 B | 50 B | 60 B | 79 B | 45 B |
+| Flash tambahan | 2.188 B | 1.874 B | 1.642 B | 2.350 B | 1.284 B |
+
+¹ Fixed-point `int16_t`, frekuensi tetap.
+
+`hitung()` O(1) waktu dan memori. Sejak 1.0.1, `ki·dt`, `kd/dt`, dan koefisien filter D disimpan dan hanya dihitung ulang bila dt berubah, jadi dengan dt tetap (timer atau `TanpaDelay`) tidak ada pembagian float sama sekali: 27% lebih cepat, 35% dengan filter D. Harganya 16 byte RAM per pengendali. Dengan `micros()` dt selalu sedikit berbeda, jadi penghematannya hanya ±6%.
+
+Di mana kita kalah dan kenapa:
+- PID_v1 ±590 siklus lebih cepat: ia mengalikan dengan `SampleTime` tetap (bukan waktu yang benar-benar lewat) dan tidak memeriksa keluaran mentok sebelum menambah integral. Dua hal itu yang membuat overshoot-nya 5,8 derajat vs 3,0 (lihat [Dibanding library lain](#dibanding-library-lain)).
+- FastPID 2× lebih cepat dan lebih hemat karena memakai bilangan bulat fixed-point. Untuk ketelitian float, tanpa batas rentang, dan dt nyata, KontrolPID sengaja tetap `float`.
+
+Di ESP32 dan STM32 `src/` tidak punya satu pun promosi `float` → `double` (diperiksa dengan `-Wdouble-promotion`). Mengulang pengukuran: sketch `extras/benchmark/KontrolPIDBenchmark` (butuh simavr).
 
 ## Referensi fungsi
 
@@ -174,7 +196,7 @@ g++ -std=c++11 -I. -I../../src uji.cpp ../../src/KontrolPID.cpp -o uji && ./uji
 
 ## Status
 
-Versi 1.0.0 sudah lolos uji logika otomatis (termasuk simulasi plant) dan compile di 7 board, tapi **belum diuji di hardware sungguhan**. Jika menemukan masalah, silakan buka *issue* di GitHub.
+Versi 1.0.1 sudah lolos uji logika otomatis (termasuk simulasi plant) dan compile di 7 board, tapi **belum diuji di hardware sungguhan**. Jika menemukan masalah, silakan buka *issue* di GitHub.
 
 ## Lisensi
 
