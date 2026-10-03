@@ -1,0 +1,16 @@
+#######################################
+# KontrolPID
+#######################################
+
+KontrolPID	KEYWORD1
+
+hitung	KEYWORD2
+aturBatas	KEYWORD2
+aturTuning	KEYWORD2
+aturFilterD	KEYWORD2
+aturTerbalik	KEYWORD2
+reset	KEYWORD2
+keluaran	KEYWORD2
+kp	KEYWORD2
+ki	KEYWORD2
+kd	KEYWORD2
