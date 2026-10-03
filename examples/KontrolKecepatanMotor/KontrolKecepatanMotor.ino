@@ -23,8 +23,8 @@ volatile long pulsa = 0;
 
 void hitungPulsa() {
   // Kanal B menentukan arah putaran.
-  if (digitalRead(PIN_ENC_B)) pulsa++;
-  else pulsa--;
+  if (digitalRead(PIN_ENC_B)) pulsa = pulsa + 1;
+  else pulsa = pulsa - 1;
 }
 
 void jalankanMotor(int pwm) {

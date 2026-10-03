@@ -25,7 +25,7 @@ public:
   bool aturBatas(float min, float maks);
   void aturTuning(float kp, float ki, float kd);
   // Saring derau D dengan low-pass. Konstanta waktu dalam detik, 0 = mati (default).
-  void aturFilterD(float detik) { _filter = detik; }
+  void aturFilterD(float detik) { _filter = detik; _dt = 0; }
   // Untuk proses terbalik: keluaran naik membuat nilai turun (mis. pendingin).
   void aturTerbalik(bool terbalik) { _terbalik = terbalik; }
   // Hapus integral & riwayat D. Isi keluaran terakhir saat pindah dari
@@ -46,6 +46,8 @@ private:
   float _min = -INFINITY, _maks = INFINITY;
   float _filter = 0;
   float _p = 0, _i = 0, _d = 0, _keluaran = 0, _nilaiLalu = 0;
+  // Disimpan per dt agar hitung() tidak membagi tiap panggilan; _dt = 0 memaksa hitung ulang.
+  float _dt = 0, _kiDt = 0, _kdPerDt = 0, _alfa = 0;
   uint32_t _waktu = 0;   // micros() saat hitung() terakhir
   bool _awal = true;     // belum ada nilai sebelumnya untuk D
   bool _terbalik = false;
